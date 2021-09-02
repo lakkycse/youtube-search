@@ -1,7 +1,7 @@
 var Sequelize = require("sequelize");
 const { Op } = require("sequelize");
 var google = require('googleapis');
-var youtube = new google.youtube_v3.Youtube({ version: 'v3', auth: "AIzaSyDhA8P1xYbTfDioA1nta3l5jUCNrlOREWI" });
+var youtube = new google.youtube_v3.Youtube({ version: 'v3', auth: "AIzaSyBSjEIjfQZ7aODCq97SiqUgVF7aI69FS7Y" });
 
 
 const sequelize = new Sequelize({
@@ -52,26 +52,29 @@ sequelize
 
 module.exports = {
     getVideos(req, res) {
-        Video.findAll({ order: [['published_at', 'DESC']] }).then(function (videos) {
-            res.send(videos);
+        let offset = req.query.offset ? req.query.offset : 0
+        let limit = req.query.limit ? req.query.limit : 10
+        Video.findAll({ offset: offset, limit: limit, order: [['published_at', 'DESC']] }).then(function (videos) {
+            res.render('layout', { title: 'Videos', videos: videos })
         })
     },
-    searchVideos(req,res){
+    searchVideos(req, res) {
         const query = req.query.query
         Video.findAll({
             where: {
-              [Op.or]: [
-                { title: {[Op.substring]:query}},
-                { description: {[Op.substring]:query}}
-              ]
+                [Op.or]: [
+                    { title: { [Op.substring]: query } },
+                    { description: { [Op.substring]: query } }
+                ]
             }
-          }).then(videos=>res.send(videos));
+        }).then(videos => res.render('layout', { title: 'Videos', videos: videos })
+        );
     },
     syncVideos(req, res) {
         setInterval(() => {
             youtube.search.list({
                 part: 'snippet',
-                q: 'hackerearth',
+                q: 'hacker',
                 order: 'date',
                 type: 'video'
 
@@ -87,7 +90,7 @@ module.exports = {
                         let snippet = items[i].snippet
                         const new_video = await Video.findByPk(Id);
                         if (new_video == null) {
-                            allVideos.push({
+                            Video.create({
                                 title: snippet.title,
                                 description: snippet.description,
                                 Id: Id,
@@ -96,12 +99,9 @@ module.exports = {
                             })
                         }
                     }
-                    for (let i = 0; i < allVideos.length; i++) {
-                        Video.create(allVideos[i]);
-                    }
-                    // res.send(`successfully synced ${allVideos.length} videos`);
+                    res.send(`successfully synced latest videos`);
                 }
             });
-        }, 5000)
+        }, 10000)
     },
 };
