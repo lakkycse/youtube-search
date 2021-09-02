@@ -99,7 +99,7 @@ module.exports = {
                             })
                         }
                     }
-                    res.send(`successfully synced latest videos`);
+                    // res.send(`successfully synced latest videos`);
                 }
             });
         }, 10000)
