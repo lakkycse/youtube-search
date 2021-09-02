@@ -51,6 +51,7 @@ sequelize
     });
 
 module.exports = {
+    // Get all the video with pagination,descending order of published date
     getVideos(req, res) {
         let offset = req.query.offset ? req.query.offset : 0
         let limit = req.query.limit ? req.query.limit : 10
@@ -58,6 +59,7 @@ module.exports = {
             res.render('layout', { title: 'Videos', videos: videos })
         })
     },
+    //search api with in title and description
     searchVideos(req, res) {
         const query = req.query.query
         Video.findAll({
@@ -66,10 +68,11 @@ module.exports = {
                     { title: { [Op.substring]: query } },
                     { description: { [Op.substring]: query } }
                 ]
-            }
+            }, order: [['published_at', 'DESC']]
         }).then(videos => res.render('layout', { title: 'Videos', videos: videos })
         );
     },
+    //Store videos with given keyword with 10 seconds interval
     syncVideos(req, res) {
         setInterval(() => {
             youtube.search.list({
@@ -84,7 +87,7 @@ module.exports = {
                 }
                 if (data) {
                     let items = data['data']['items'];
-                    let allVideos = []
+                    // let allVideos = []
                     for (let i = 0; i < items.length; i++) {
                         let Id = items[i].id.videoId
                         let snippet = items[i].snippet
